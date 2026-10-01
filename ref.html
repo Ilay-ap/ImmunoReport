@@ -1,0 +1,1145 @@
+
+
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script>
+window.addEventListener('error', function(e) {
+    fetch('/pt-br/log-error/', {
+        method: 'POST',
+        body: JSON.stringify({ message: e.message, filename: e.filename, lineno: e.lineno, colno: e.colno, error: e.error ? e.error.stack : null })
+    });
+});
+window.addEventListener('unhandledrejection', function(e) {
+    fetch('/pt-br/log-error/', {
+        method: 'POST',
+        body: JSON.stringify({ message: e.reason ? e.reason.message : 'Unhandled Rejection', error: e.reason ? e.reason.stack : null })
+    });
+});
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Início - Catálogo de Mamíferos Extintos</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Interactive catalog of extinct mammals since 1500 with maps, detailed information and favorites system">
+    <meta name="theme-color" content="#16213e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Extinct Mammals">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/static/manifest.8713df538a16.json">
+    
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/icons/icon-72x72.e90f1abb7ac3.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/icons/icon-72x72.e90f1abb7ac3.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/icons/icon-192x192.a792486f9c08.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/images/icons/icon-152x152.747aeafd90d5.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/static/images/icons/icon-144x144.2f3142cc6f16.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/static/images/icons/icon-128x128.7e9fc5d270af.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/static/images/icons/icon-128x128.7e9fc5d270af.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/static/images/icons/icon-96x96.47b3093d0995.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/static/images/icons/icon-72x72.e90f1abb7ac3.png">
+    <link rel="apple-touch-icon" href="/static/images/icons/icon-192x192.a792486f9c08.png">
+    <link rel="stylesheet" href="/static/css/style.7274a5324af5.css?v=2.0">
+    <link rel="stylesheet" href="/static/css/accessibility.c8096b4a88a7.css">
+    <link rel="stylesheet" href="/static/css/cookie-consent.dc53b78904a0.css">
+    <link rel="stylesheet" href="/static/css/alerts.ff167e43860b.css">
+    <link rel="stylesheet" href="/static/css/buttons_fix.925b8461e20a.css">
+    
+    
+    <!-- Microsoft Clarity -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "tnroogw3ii");
+    </script>
+    
+    <script>
+        window.CLARITY_PROJECT_ID = 'tnroogw3ii';
+        
+        // URLs geradas pelo Django para uso no JavaScript (correção de i18n_patterns)
+        window.URLS = {
+            search: "/pt-br/search/",
+            globalMapData: "/pt-br/global-map-data/",
+            mammalBase: "/pt-br/mammal/1/".replace('/1/', '/')
+        };
+        
+        // Traduções para JavaScript
+        window.translations = {
+            'all_species': "Todas as Espécies",
+            'no_results': "Nenhum resultado encontrado",
+            'try_adjust_filters': "Tente ajustar os filtros ou usar termos de busca diferentes.",
+            'view_details': "Ver Detalhes",
+            'dark_theme': "Escuro",
+            'light_theme': "Claro"
+        };
+    </script>
+    
+    <style>
+    /* Navegação com tamanho fixo */
+    .navbar .container {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 2rem;
+        min-height: 70px;
+    }
+    
+    .nav-brand {
+        grid-column: 1;
+    }
+    
+    .nav-menu {
+        grid-column: 3;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .nav-menu li {
+        margin: 0;
+    }
+    
+    .nav-link {
+        display: inline-block;
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: var(--transition);
+        font-weight: 500;
+    }
+    
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-1px);
+    }
+    
+    /* Controles de tema e idioma — minimalistas */
+    .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-left: 0.4rem;
+        padding-left: 0.4rem;
+        border-left: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Mini-buttons for theme + language */
+    .theme-toggle {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        max-width: 30px !important;
+        min-height: 30px !important;
+        max-height: 30px !important;
+        align-self: center !important;
+        padding: 0 !important;
+        border-radius: 4px !important;
+        font-size: 0.75rem !important;
+        line-height: 30px !important;
+        cursor: pointer !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        transition: background 0.2s !important;
+        aspect-ratio: 1 / 1 !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+    
+    
+    .theme-toggle:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    .theme-toggle-icon {
+        font-size: 0.9rem;
+        line-height: 1;
+    }
+    
+    .theme-toggle-text { display: none !important; }
+    
+    .language-selector {
+        height: 30px !important;
+        min-width: auto !important;
+        width: auto !important;
+        padding: 0 1.2rem 0 0.35rem !important;
+        font-size: 0.72rem !important;
+        font-weight: 500 !important;
+        border-radius: 4px !important;
+        cursor: pointer !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        transition: background 0.2s !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 0.3rem center !important;
+    }
+    
+    .language-selector:hover {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    .language-form {
+        margin: 0;
+    }
+    
+    /* Hamburger menu */
+    .hamburger-menu {
+        display: none;
+        grid-column: 1;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        font-size: 1.5rem;
+        padding: 0.5rem 0.8rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    
+    .hamburger-menu:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .menu-close {
+        display: none;
+    }
+    
+    @media (max-width: 1024px) {
+        .hamburger-menu {
+            display: block;
+        }
+        
+        .nav-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 300px;
+            height: 100vh;
+            background: var(--primary-dark);
+            flex-direction: column;
+            align-items: stretch;
+            padding: 2rem 1rem;
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+            transition: right 0.3s ease;
+            z-index: 2000;
+            overflow-y: auto;
+        }
+        
+        .nav-menu.active {
+            right: 0;
+        }
+        
+        .menu-close {
+            display: block;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 2rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .menu-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .nav-link {
+            width: 100%;
+            text-align: left;
+            padding: 0.8rem 1rem;
+        }
+        
+        .nav-controls {
+            flex-direction: column;
+            width: 100%;
+            margin-left: 0;
+            padding-left: 0;
+            border-left: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .theme-toggle,
+        .language-selector {
+            width: 100%;
+        }
+    }
+    
+    .menu-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 990;
+    }
+    
+    .menu-overlay.active {
+        display: block;
+    }
+    </style>
+</head>
+<body>
+    <!-- Skip link para acessibilidade -->
+    <a href="#main-content" class="skip-to-main">Pular para conteúdo principal</a>
+    
+    <header>
+        <nav class="navbar">
+            <div class="container">
+                <button class="hamburger-menu" id="hamburger-menu" aria-label="Abrir menu de navegação" aria-expanded="false">
+                    ☰
+                </button>
+                
+                <div class="nav-brand">
+                    <a href="/pt-br/">
+                        <h1>Catálogo de Mamíferos Extintos</h1>
+                        <p class="subtitle">Memória Biológica desde 1500</p>
+                    </a>
+                </div>
+                
+                <ul class="nav-menu" id="nav-menu">
+                    <button class="menu-close" id="menu-close" aria-label="Fechar menu">×</button>
+                    
+                    <li><a href="/pt-br/" class="nav-link">Início</a></li>
+                    <li><a href="/pt-br/about/" class="nav-link">Sobre</a></li>
+                    <li><a href="/pt-br/global-map/" class="nav-link">Dados</a></li>
+                    
+                    
+                        <li><a href="/pt-br/accounts/login/" class="nav-link">Entrar</a></li>
+                    
+                    
+                    <li class="nav-controls">
+                        <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema claro/escuro" aria-pressed="false">
+                            <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
+                            <span class="theme-toggle-text"></span>
+                        </button>
+                        
+                        <form action="/i18n/setlang/" method="post" id="language-form" class="language-form">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="VxfRlX6TuG5s5LUoKwCgmHsrrMOg0m2HPJgp5ANKMKXfN2WsoiyD8jgiZAzClhB7">
+                            <input name="next" type="hidden" value="/pt-br/">
+                            <select name="language" onchange="this.form.submit()" class="language-selector" aria-label="Selecionar idioma">
+                                
+                                
+                                
+                                    <option value="pt-br" selected>
+                                        Português
+                                    </option>
+                                
+                                    <option value="en" >
+                                        English
+                                    </option>
+                                
+                            </select>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- Overlay para menu mobile -->
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <main id="main-content" class="main-content">
+        
+        
+        
+<div class="container">
+    <section class="hero" style="padding: 2.5rem 2rem; margin-bottom: 2rem;" role="region" aria-label="Introduction">
+        <h2 style="margin-bottom: 0; font-size: 2.4rem;">Catálogo Digital de Mamíferos Extintos desde 1500</h2>
+    </section>
+
+    <section class="control-bar-section" role="search" aria-label="Search and Filters">
+        <style>
+            .unified-toolbar {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: center;
+                gap: 1.5rem;
+                margin: 2rem 0;
+                padding: 1rem 1.5rem;
+                background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--card-bg) 100%);
+                border-radius: 12px;
+                box-shadow: var(--shadow-md);
+                border: 1px solid var(--border-color);
+            }
+            .toolbar-search {
+                display: flex;
+                flex: 1 1 350px;
+                gap: 0.5rem;
+            }
+            .toolbar-actions {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 1.5rem;
+            }
+            .filter-dropdown {
+                position: relative;
+                margin: 0;
+            }
+            .filter-dropdown summary {
+                list-style: none;
+                cursor: pointer;
+                background-color: var(--card-bg);
+                color: var(--primary-color);
+                padding: 0.5rem 1rem;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 1rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                transition: var(--transition);
+                border: 2px solid var(--border-color);
+            }
+            .filter-dropdown summary:hover {
+                border-color: var(--primary-color);
+            }
+            .filter-dropdown summary::-webkit-details-marker {
+                display: none;
+            }
+            .filter-dropdown summary::after {
+                content: '▾';
+                font-size: 1.2rem;
+                transition: transform 0.3s ease;
+                color: var(--primary-color);
+            }
+            .filter-dropdown[open] summary::after {
+                transform: rotate(180deg);
+            }
+            .filter-dropdown-content {
+                position: absolute;
+                top: 120%;
+                left: 50%;
+                transform: translateX(-50%);
+                width: max-content;
+                max-width: 90vw;
+                background-color: var(--card-bg);
+                padding: 1.5rem;
+                border-radius: 12px;
+                box-shadow: var(--shadow-lg);
+                border: 1px solid var(--border-color);
+                z-index: 100;
+                animation: fadeIn 0.2s ease-in-out;
+            }
+            .filter-dropdown-content h4 {
+                font-size: 1.1rem;
+                color: var(--primary-color);
+                margin-bottom: 0.9rem;
+                margin-top: 1.25rem;
+                font-weight: 600;
+            }
+            .filter-dropdown-content h4:first-child {
+                margin-top: 0;
+            }
+            @media (max-width: 900px) {
+                .unified-toolbar {
+                    flex-direction: column;
+                    align-items: stretch;
+                    padding: 0.75rem 1rem;
+                    gap: 0.75rem;
+                }
+                .toolbar-search {
+                    flex: 1 1 auto;
+                }
+                .toolbar-search .search-input {
+                    min-width: 0;
+                    padding: 0.7rem 0.9rem;
+                    font-size: 0.9rem;
+                }
+                .toolbar-search .search-btn,
+                .toolbar-search .clear-btn {
+                    padding: 0.7rem 1rem;
+                    font-size: 0.85rem;
+                }
+                .toolbar-actions {
+                    justify-content: space-between;
+                }
+                .filter-dropdown-content {
+                    left: 0;
+                    right: auto;
+                    transform: none;
+                    width: calc(100vw - 3rem);
+                    max-width: calc(100vw - 3rem);
+                }
+            }
+            @media (max-width: 600px) {
+                .unified-toolbar {
+                    padding: 0.6rem 0.6rem;
+                    gap: 0.6rem;
+                    margin: 1rem 0;
+                }
+                .toolbar-search {
+                    flex-direction: row;
+                    flex-wrap: nowrap;
+                    gap: 0.3rem;
+                }
+                .toolbar-search .search-input {
+                    flex: 1 1 auto;
+                    min-width: 0;
+                    padding: 0.5rem 0.6rem;
+                    font-size: 0.85rem;
+                }
+                .toolbar-search .search-btn,
+                .toolbar-search .clear-btn {
+                    flex: 0 0 auto;
+                    padding: 0.5rem 0.6rem;
+                    font-size: 0.8rem;
+                    text-align: center;
+                }
+                .toolbar-actions {
+                    flex-direction: row;
+                    flex-wrap: nowrap;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 0.5rem;
+                    width: 100%;
+                }
+                .filter-dropdown {
+                    flex: 1;
+                }
+                .filter-dropdown summary {
+                    font-size: 0.85rem;
+                    padding: 0.4rem 0.5rem;
+                    justify-content: center;
+                }
+                .pagination-controls-inline {
+                    flex: 1;
+                    justify-content: center;
+                }
+                .pagination-controls-inline select {
+                    font-size: 0.85rem;
+                    padding: 0.3rem;
+                }
+                .filter-dropdown-content {
+                    position: absolute;
+                    top: 110%;
+                    left: 0;
+                    right: auto;
+                    bottom: auto;
+                    width: 100%;
+                    max-width: 100%;
+                    max-height: 60vh;
+                    overflow-y: auto;
+                    border-radius: 12px;
+                    z-index: 9999;
+                    box-shadow: var(--shadow-lg);
+                }
+            }
+        </style>
+    </section>
+
+    <section class="control-bar-section" role="search" aria-label="Search and Filters">
+        <div class="unified-toolbar" id="pagination-wrapper">
+            
+            <!-- 1. Search Bar -->
+            <div class="toolbar-search">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    class="search-input" 
+                    placeholder="Buscar por nome, descrição, habitat ou distribuição..."
+                    autocomplete="off"
+                    aria-label="Campo de busca de mamíferos"
+                    style="flex: 1; min-width: 0;"
+                >
+                <button id="search-btn" class="search-btn" aria-label="Realizar busca">Buscar</button>
+                <button id="clear-btn" class="clear-btn" aria-label="Limpar busca e filtros">✕ Limpar</button>
+            </div>
+            
+            <div class="toolbar-actions">
+                <!-- 2. Filters Dropdown -->
+                <details class="filter-dropdown">
+                    <summary>Filters</summary>
+                    <div class="filter-dropdown-content">
+                        <h4>Filtrar por Região:</h4>
+                        <div class="filter-buttons" role="group" aria-label="Filtros de região">
+                            <button class="filter-btn" data-filter-type="region" data-filter-value="África" aria-label="Filtrar por África" aria-pressed="false">África</button>
+                            <button class="filter-btn" data-filter-type="region" data-filter-value="América" aria-label="Filtrar por América" aria-pressed="false">América</button>
+                            <button class="filter-btn" data-filter-type="region" data-filter-value="Ásia" aria-label="Filtrar por Ásia" aria-pressed="false">Ásia</button>
+                            <button class="filter-btn" data-filter-type="region" data-filter-value="Europa" aria-label="Filtrar por Europa" aria-pressed="false">Europa</button>
+                            <button class="filter-btn" data-filter-type="region" data-filter-value="Oceania" aria-label="Filtrar por Oceania" aria-pressed="false">Oceania</button>
+                        </div>
+                        
+                        <h4>Filtrar por Taxonomia:</h4>
+                        <div class="filter-buttons" role="group" aria-label="Filtros de taxonomia">
+                            <button class="filter-btn" data-filter-type="taxonomy" data-filter-value="RODENTIA" aria-label="Filtrar por Roedores" aria-pressed="false">Roedores</button>
+                            <button class="filter-btn" data-filter-type="taxonomy" data-filter-value="CHIROPTERA" aria-label="Filtrar por Quirópteros" aria-pressed="false">Quirópteros</button>
+                            <button class="filter-btn" data-filter-type="taxonomy" data-filter-value="ARTIODACTYLA" aria-label="Filtrar por Artiodáctilos" aria-pressed="false">Artiodáctilos</button>
+                            <button class="filter-btn" data-filter-type="taxonomy" data-filter-value="EULIPOTYPHLA" aria-label="Filtrar por Eulipotiflos" aria-pressed="false">Eulipotiflos</button>
+                            <button class="filter-btn" data-filter-type="taxonomy" data-filter-value="DIPROTODONTIA" aria-label="Filtrar por Diprotodontes" aria-pressed="false">Diprotodontes</button>
+                            <button class="filter-btn" data-filter-type="taxonomy" data-filter-value="CARNIVORA" aria-label="Filtrar por Carnívoros" aria-pressed="false">Carnívoros</button>
+                            <button class="filter-btn" data-filter-type="taxonomy" data-filter-value="PERAMELEMORPHIA" aria-label="Filtrar por Peramelemorfos" aria-pressed="false">Peramelemorfos</button>
+                            <button class="filter-btn" data-filter-type="taxonomy" data-filter-value="PRIMATES" aria-label="Filtrar por Primatas" aria-pressed="false">Primatas</button>
+                            <button class="filter-btn" data-filter-type="taxonomy" data-filter-value="LAGOMORPHA" aria-label="Filtrar por Lagomorfos" aria-pressed="false">Lagomorfos</button>
+                            <button class="filter-btn" data-filter-type="taxonomy" data-filter-value="DASYUROMORPHIA" aria-label="Filtrar por Dasiuromorfos" aria-pressed="false">Dasiuromorfos</button>
+                            <button class="filter-btn" data-filter-type="taxonomy" data-filter-value="SIRENIA" aria-label="Filtrar por Sirênios" aria-pressed="false">Sirênios</button>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- 3. Pagination & Display Options -->
+                <div class="pagination-controls-inline" style="display: flex; gap: 0.5rem; align-items: center;">
+                    <label for="items-per-page" style="margin:0; font-size: 0.9rem; font-weight: 500;">Exibir:</label>
+                    <select id="items-per-page" class="items-per-page-select" style="padding: 0.3rem; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--card-bg); color: var(--text-color);">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="30">30</option>
+                        <option value="all">Todos</option>
+                    </select>
+                </div>
+
+                <div class="pagination-nav" style="display: flex; gap: 0.25rem; align-items: center;">
+                    <button class="pagination-btn" id="first-page-btn" aria-label="First page" style="padding: 0.2rem 0.5rem; min-width: auto; font-size: 0.9rem;">««</button>
+                    <button class="pagination-btn" id="prev-page-btn" aria-label="Previous page" style="padding: 0.2rem 0.5rem; min-width: auto; font-size: 0.9rem;">‹</button>
+                    
+                    <span class="pagination-info" id="pagination-info" style="font-size: 0.9rem; margin: 0 0.5rem;">
+                        <strong id="current-page">1</strong> / <strong id="total-pages">1</strong>
+                    </span>
+                    
+                    <button class="pagination-btn" id="next-page-btn" aria-label="Next page" style="padding: 0.2rem 0.5rem; min-width: auto; font-size: 0.9rem;">›</button>
+                    <button class="pagination-btn" id="last-page-btn" aria-label="Last page" style="padding: 0.2rem 0.5rem; min-width: auto; font-size: 0.9rem;">»»</button>
+                </div>
+                
+                <div class="pagination-total" style="display:none;">
+                    <span id="total-items">114</span>
+                </div>
+            </div>
+        </div>
+    </section>
+        
+        <h3 id="species-count">Todas as Espécies (114)</h3>
+        <div class="grid" id="mammals-list">
+            
+            <div class="mammal-card">
+                
+                <div class="card-image">
+                    <img src="/static/images/mammals_gallery/Perameles fasciata - 01_Pele Visao Superior.jpg" 
+                         alt="Image of Bandicoot-barrado de NSW (Perameles fasciata), extinct mammal"
+                         loading="lazy">
+                </div>
+                
+                <div class="card-header">
+                    <h4 class="common-name">Bandicoot-barrado de NSW</h4>
+                    <p class="binomial-name"><em>Perameles fasciata</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        New South Wales barred bandicoot (Perameles fasciata) era um mamifero da ordem Peramelemorphia. Habitava a regiao de Nova Gales do Sul. Sua extincao foi registrada em Século XIX (~1846). A principal c...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/59/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-image">
+                    <img src="/static/images/mammals_gallery/Perameles notina - 01_Pele Holotipo Vista Superior.jpg" 
+                         alt="Image of Bandicoot-barrado do sul (Perameles notina), extinct mammal"
+                         loading="lazy">
+                </div>
+                
+                <div class="card-header">
+                    <h4 class="common-name">Bandicoot-barrado do sul</h4>
+                    <p class="binomial-name"><em>Perameles notina</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Southern barred bandicoot (Perameles notina) era um mamifero da ordem Peramelemorphia. Habitava a regiao de Sudeste Australiano. Sua extincao foi registrada em Século XIX (~1857). A principal causa de...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/61/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-image">
+                    <img src="/static/images/mammals_gallery/Perameles papillon - 01_Pele.png" 
+                         alt="Image of Bandicoot-barrado-de-Nullarbor (Perameles papillon), extinct mammal"
+                         loading="lazy">
+                </div>
+                
+                <div class="card-header">
+                    <h4 class="common-name">Bandicoot-barrado-de-Nullarbor</h4>
+                    <p class="binomial-name"><em>Perameles papillon</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Nullarbor barred bandicoot (Perameles papillon) era um mamifero da ordem Peramelemorphia. Habitava a regiao de Planície de Nullarbor. Sua extincao foi registrada em Século XX (~1928). A principal caus...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/62/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Bandicoot-de-pes-de-porco do norte</h4>
+                    <p class="binomial-name"><em>Chaeropus yirratji</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Northern pig-footed bandicoot (Chaeropus yirratji) era um mamifero da ordem Peramelemorphia. Habitava a regiao de Norte da Austrália. Sua extincao foi registrada em Anos 1950. A principal causa de sua...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/56/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Bandicoot-de-pes-de-porco do sul</h4>
+                    <p class="binomial-name"><em>Chaeropus ecaudatus</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Southern pig-footed bandicoot (Chaeropus ecaudatus) era um mamifero da ordem Peramelemorphia. Habitava a regiao de Sul e Oeste da Austrália. Sua extincao foi registrada em Anos 1950. A principal causa...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/55/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Bandicoot-do-deserto</h4>
+                    <p class="binomial-name"><em>Perameles eremiana</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Desert bandicoot (Perameles eremiana) era um mamifero da ordem Peramelemorphia. Habitava a regiao de Centro da Austrália. Sua extincao foi registrada em 1943. A principal causa de sua extincao foi: im...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/58/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Bettong-de-Nullarbor</h4>
+                    <p class="binomial-name"><em>Bettongia pusilla</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Nullarbor dwarf bettong (Bettongia pusilla) era um mamifero da ordem Diprotodontia. Habitava a regiao de Nullarbor Plain (Austrália). Sua extincao foi registrada em Início do Século XVI. A principal c...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/48/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Bettong-do-deserto</h4>
+                    <p class="binomial-name"><em>Bettongia anhydra</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Desert bettong (Bettongia anhydra) era um mamifero da ordem Diprotodontia. Habitava a regiao de Austrália. Sua extincao foi registrada em Décadas de 1930 a 1950. A principal causa de sua extincao foi:...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/47/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Bilby-menor / Yallara</h4>
+                    <p class="binomial-name"><em>Macrotis leucura</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Lesser bilby (Yallara) (Macrotis leucura) era um mamifero da ordem Peramelemorphia. Habitava a regiao de Desertos de Great Sandy e Gibson (Austrália). Sua extincao foi registrada em Após 1960. A princ...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/57/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Canguru-rato-do-deserto</h4>
+                    <p class="binomial-name"><em>Caloprymnus campestris</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Desert rat-kangaroo (Caloprymnus campestris) era um mamifero da ordem Diprotodontia. Habitava a regiao de Bacia do Lago Eyre (Austrália Meridional). Sua extincao foi registrada em 1935. A principal ca...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/49/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-image">
+                    <img src="/static/images/mammals_gallery/Geocapromys columbianus - mandibula Holotipo - VPM-9602.jpg" 
+                         alt="Image of Coelho-de-Cuba / Cuban coney (Geocapromys columbianus), extinct mammal"
+                         loading="lazy">
+                </div>
+                
+                <div class="card-header">
+                    <h4 class="common-name">Coelho-de-Cuba / Cuban coney</h4>
+                    <p class="binomial-name"><em>Geocapromys columbianus</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Cuban coney (Geocapromys columbianus) era um mamifero da ordem Rodentia. Habitava a regiao de Cuba. Sua extincao foi registrada em Início dos 1500. A principal causa de sua extincao foi: destruição fl...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/8/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Coryphomys de Buhler</h4>
+                    <p class="binomial-name"><em>Coryphomys buehleri</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Buhler&#x27;s rat (Coryphomys buehleri) era um mamifero da ordem Rodentia. Habitava a regiao de Timor Ocidental (Indonésia). Sua extincao foi registrada em Início dos 1500. A principal causa de sua extinca...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/7/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Dusicyon avus</h4>
+                    <p class="binomial-name"><em>Dusicyon avus</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        South American fox (Dusicyon avus) era um mamifero da ordem Carnivora. Habitava a regiao de Cone Sul da América do Sul. Sua extincao foi registrada em Cerca do ano 1500. A principal causa de sua extin...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/86/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Foca-monge-do-Caribe</h4>
+                    <p class="binomial-name"><em>Neomonachus tropicalis</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Caribbean monk seal (Neomonachus tropicalis) era um mamifero da ordem Carnivora. Habitava a regiao de Atóis do Caribe. Sua extincao foi registrada em 1952. A principal causa de sua extincao foi: caça ...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/88/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Fossa gigante</h4>
+                    <p class="binomial-name"><em>Cryptoprocta spelea</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Giant fossa (Cryptoprocta spelea) era um mamifero da ordem Carnivora. Habitava a regiao de Madagascar. Sua extincao foi registrada em Antes de 1658. A principal causa de sua extincao foi: declínio sev...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/84/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Gazela-da-arabia-saudita</h4>
+                    <p class="binomial-name"><em>Gazella saudiya</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Saudi gazelle (Gazella saudiya) era um mamifero da ordem Artiodactyla. Habitava a regiao de Arábia Saudita e Kuwait. Sua extincao foi registrada em Anos 1970 (Morta na natureza). A principal causa de ...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/91/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Gazela-da-Rainha-de-Saba</h4>
+                    <p class="binomial-name"><em>Gazella bilkis</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Gazela-da-Rainha-de-Saba (Gazella bilkis) e uma especie extinta de mamifero da ordem Artiodactyla. Habitava Iemen. Sua extincao biologica ocorreu por volta de 1951, sendo formalmente reconhecida em 19...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/107/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Gazela-vermelha</h4>
+                    <p class="binomial-name"><em>Eudorcas rufina</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Gazela-vermelha (Eudorcas rufina) e uma especie extinta de mamifero da ordem Artiodactyla. Habitava Argelia. Sua extincao biologica ocorreu por volta de 1894, sendo formalmente reconhecida em 2008 (IU...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/105/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Grande nesofonte cubano</h4>
+                    <p class="binomial-name"><em>Nesophontes major</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Greater Cuban nesophontes (Nesophontes major) era um mamifero da ordem Eulipotyphla. Habitava a regiao de Cuba. Sua extincao foi registrada em Século XVI. A principal causa de sua extincao foi: vulner...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/67/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Grande rato-saltador</h4>
+                    <p class="binomial-name"><em>Notomys robustus</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Great hopping mouse (Notomys robustus) era um mamifero da ordem Rodentia. Habitava a regiao de Flinders Ranges (Austrália Meridional). Sua extincao foi registrada em Meados do Século XIX. A principal ...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/32/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Hipopotamo-anao de Lemerle</h4>
+                    <p class="binomial-name"><em>Hippopotamus lemerlei</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Lemerle&#x27;s dwarf hippopotamus (Hippopotamus lemerlei) era um mamifero da ordem Artiodactyla. Habitava a regiao de Madagascar. Sua extincao foi registrada em Pós-1500. A principal causa de sua extincao ...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/92/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-image">
+                    <img src="/static/images/mammals_gallery/Hippopotamus madagascariensis - Cranio Lateral Macho.png" 
+                         alt="Image of Hipopotamo-anao-de-madagascar (Hippopotamus madagascariensis), extinct mammal"
+                         loading="lazy">
+                </div>
+                
+                <div class="card-header">
+                    <h4 class="common-name">Hipopotamo-anao-de-madagascar</h4>
+                    <p class="binomial-name"><em>Hippopotamus madagascariensis</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Madagascan dwarf hippopotamus (Hippopotamus madagascariensis) era um mamifero da ordem Artiodactyla. Habitava a regiao de Madagascar. Sua extincao foi registrada em Pós-1500. A principal causa de sua ...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/93/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Hipopotamo-de-madagascar</h4>
+                    <p class="binomial-name"><em>Hippopotamus laloumena</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Hipopotamo-de-madagascar (Hippopotamus laloumena) e uma especie extinta de mamifero da ordem Artiodactyla. Habitava Madagascar. Sua extincao biologica ocorreu por volta de 1500, sendo formalmente reco...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/111/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mammal-card">
+                
+                <div class="card-header">
+                    <h4 class="common-name">Hipotrago-azul / Bluebuck</h4>
+                    <p class="binomial-name"><em>Hippotragus leucophaeus</em></p>
+                </div>
+                <div class="card-body">
+                    <p class="description">
+                        Bluebuck (Hippotragus leucophaeus) era um mamifero da ordem Artiodactyla. Habitava a regiao de Sul da África. Sua extincao foi registrada em 1800. A principal causa de sua extincao foi: caça intensiva...
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/pt-br/mammal/94/" class="btn-primary">
+                        Ver Detalhes →
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+    </section>
+</div>
+
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Catálogo de Mamíferos Extintos | TCC - TIC aplicadas à conservação da memória biológica</p>
+            <p>Desenvolvido para fins educacionais e de conservação da memória biológica</p>
+        </div>
+    </footer>
+
+    <div id="cookie-consent-banner" class="cookie-consent-banner">
+        <div class="cookie-consent-content">
+            <div class="cookie-consent-text">
+                <h3>🍪 Cookies e Privacidade</h3>
+                <p>
+                    Utilizamos cookies para melhorar sua experiência e entender como os visitantes interagem com nosso conteúdo. Seus dados são tratados de forma anônima e segura, em conformidade com a LGPD e GDPR.
+                </p>
+            </div>
+            <div class="cookie-consent-buttons">
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Aceitar Cookies</button>
+                <button id="cookie-reject" class="cookie-btn cookie-btn-reject">Rejeitar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/script.e963920f1737.js?v=2.1"></script>
+    <script src="/static/js/cookie-consent.e0242fb893e5.js"></script>
+    <script src="/static/js/pwa.901648561535.js"></script>
+    
+
+</body>
+
+</html>
