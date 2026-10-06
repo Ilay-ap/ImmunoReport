@@ -128,3 +128,143 @@ async def call_iedb(
     if last_error:
         raise last_error
     raise IEDBError("Erro inesperado na comunicação com o IEDB.")
+
+
+IEDB_MHCII_URL = "https://tools-cluster-interface.iedb.org/tools_api/mhcii/"
+
+async def call_iedb_mhcii(
+    method: str,
+    sequence_text: str,
+    allele: str,
+    timeout: float = DEFAULT_TIMEOUT,
+) -> str:
+    """
+    Make a POST request to the IEDB MHC-II prediction API.
+    """
+    payload = {
+        "method": method,
+        "sequence_text": sequence_text,
+        "allele": allele,
+    }
+
+    last_error = None
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            logger.info(
+                f"IEDB MHC-II API call attempt {attempt}/{MAX_RETRIES} — "
+                f"method={method}, alleles={allele}"
+            )
+
+            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+                response = await client.post(IEDB_MHCII_URL, data=payload)
+
+            if response.status_code >= 500:
+                logger.warning(f"IEDB returned {response.status_code} on attempt {attempt}")
+                last_error = IEDBError(
+                    f"IEDB server error (HTTP {response.status_code})",
+                    status_code=response.status_code,
+                )
+                if attempt < MAX_RETRIES:
+                    continue
+                raise last_error
+
+            if response.status_code >= 400:
+                error_text = response.text[:500]
+                raise IEDBError(
+                    f"IEDB request error (HTTP {response.status_code}): {error_text}",
+                    status_code=response.status_code,
+                )
+
+            raw_text = response.text.strip()
+            if not raw_text:
+                raise IEDBError("IEDB returned an empty response.")
+
+            if "\t" not in raw_text and len(raw_text) < 500:
+                raise IEDBError(f"IEDB returned an error: {raw_text}")
+
+            logger.info(f"IEDB MHC-II API call successful — received {len(raw_text)} bytes")
+            return raw_text
+
+        except httpx.TimeoutException:
+            last_error = IEDBError("Tempo limite excedido na comunicação com o IEDB.")
+            if attempt < MAX_RETRIES:
+                continue
+            raise last_error
+        except httpx.ConnectError:
+            raise IEDBError("Erro de conexão com o servidor do IEDB.")
+        except httpx.RequestError as e:
+            raise IEDBError(f"Erro de comunicação com o servidor governamental: {str(e)}")
+
+    if last_error:
+        raise last_error
+    raise IEDBError("Erro inesperado na comunicação com o IEDB.")
+
+
+IEDB_BCELL_URL = "https://tools-cluster-interface.iedb.org/tools_api/bcell/"
+
+async def call_iedb_bcell(
+    method: str,
+    sequence_text: str,
+    timeout: float = DEFAULT_TIMEOUT,
+) -> str:
+    """
+    Make a POST request to the IEDB B Cell linear epitope prediction API.
+    """
+    payload = {
+        "method": method,
+        "sequence_text": sequence_text,
+    }
+
+    last_error = None
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            logger.info(
+                f"IEDB B-Cell API call attempt {attempt}/{MAX_RETRIES} — "
+                f"method={method}"
+            )
+
+            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+                response = await client.post(IEDB_BCELL_URL, data=payload)
+
+            if response.status_code >= 500:
+                logger.warning(f"IEDB returned {response.status_code} on attempt {attempt}")
+                last_error = IEDBError(
+                    f"IEDB server error (HTTP {response.status_code})",
+                    status_code=response.status_code,
+                )
+                if attempt < MAX_RETRIES:
+                    continue
+                raise last_error
+
+            if response.status_code >= 400:
+                error_text = response.text[:500]
+                raise IEDBError(
+                    f"IEDB request error (HTTP {response.status_code}): {error_text}",
+                    status_code=response.status_code,
+                )
+
+            raw_text = response.text.strip()
+            if not raw_text:
+                raise IEDBError("IEDB returned an empty response.")
+
+            if "\t" not in raw_text and len(raw_text) < 500:
+                raise IEDBError(f"IEDB returned an error: {raw_text}")
+
+            logger.info(f"IEDB B-Cell API call successful — received {len(raw_text)} bytes")
+            return raw_text
+
+        except httpx.TimeoutException:
+            last_error = IEDBError("Tempo limite excedido na comunicação com o IEDB.")
+            if attempt < MAX_RETRIES:
+                continue
+            raise last_error
+        except httpx.ConnectError:
+            raise IEDBError("Erro de conexão com o servidor do IEDB.")
+        except httpx.RequestError as e:
+            raise IEDBError(f"Erro de comunicação com o servidor governamental: {str(e)}")
+
+    if last_error:
+        raise last_error
+    raise IEDBError("Erro inesperado na comunicação com o IEDB.")

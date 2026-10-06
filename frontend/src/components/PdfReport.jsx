@@ -24,7 +24,7 @@ const formatHeader = (key) => {
     allele: 'Alelo', seq_num: 'Seq #', start: 'Início', end: 'Fim', length: 'Tam.',
     peptide: 'Peptídeo', percentile_rank: 'Rank %', binding_affinity: 'Afinidade',
     ic50: 'IC50 (nM)', score: 'Score', ann_ic50: 'ANN IC50', ann_rank: 'ANN Rank',
-    smm_ic50: 'SMM IC50', smm_rank: 'SMM Rank',
+    smm_ic50: 'SMM IC50', smm_rank: 'SMM Rank', position: 'Pos.', residue: 'Resíduo',
   };
   return labels[key] || key.replace(/_/g, ' ').toUpperCase();
 };

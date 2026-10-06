@@ -13,6 +13,8 @@ export default function VariantComparison() {
   const [method, setMethod] = useState('netmhcpan_el');
   const [results, setResults] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [escapeFilter, setEscapeFilter] = useState('All');
+  const [sortOrder, setSortOrder] = useState('fold_change_desc');
 
   // Customize Report State
   const [logo, setLogo] = useState(null);
@@ -62,11 +64,26 @@ export default function VariantComparison() {
     }
   };
 
+  let filteredResults = results ? [...results] : [];
+  if (escapeFilter === 'Escape') {
+    filteredResults = filteredResults.filter(r => r.escape);
+  } else if (escapeFilter === 'NoEscape') {
+    filteredResults = filteredResults.filter(r => !r.escape);
+  }
+
+  filteredResults.sort((a, b) => {
+    if (sortOrder === 'fold_change_desc') return b.fold_change - a.fold_change;
+    if (sortOrder === 'fold_change_asc') return a.fold_change - b.fold_change;
+    if (sortOrder === 'mut_rank_asc') return a.mut_rank - b.mut_rank;
+    if (sortOrder === 'allele') return a.allele.localeCompare(b.allele);
+    return 0;
+  });
+
   const exportCSV = () => {
-    if (!results) return;
+    if (!filteredResults || filteredResults.length === 0) return;
     const headers = ['ID', 'Alelo', 'WT Peptideo', 'WT Rank', 'WT Afinidade', 'MUT Peptideo', 'MUT Rank', 'MUT Afinidade', 'Fold Change (WT/MUT)', 'Escape'];
     const csv = [headers.join(',')];
-    results.forEach(r => {
+    filteredResults.forEach(r => {
       csv.push(`${r.id},${r.allele},${r.wt_peptide},${r.wt_rank},${r.wt_affinity},${r.mut_peptide},${r.mut_rank},${r.mut_affinity},${r.fold_change.toFixed(3)},${r.escape ? 'SIM' : 'NAO'}`);
     });
     
@@ -166,12 +183,12 @@ export default function VariantComparison() {
             <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
               <h3 className="text-xl font-bold text-gray-800">Tabela de Comparação WT vs MUT</h3>
               
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <button
                   onClick={() => setShowSettings(!showSettings)}
                   className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
                 >
-                  <Settings2 className="w-4 h-4" /> Personalizar PDF
+                  <Settings2 className="w-4 h-4" /> Personalizar Relatório
                 </button>
 
                 <button
@@ -192,24 +209,70 @@ export default function VariantComparison() {
 
             {/* Report Settings Panel */}
             {showSettings && (
-              <div className="mb-6 pt-2 pb-6 border-b border-gray-100 grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in slide-in-from-top-2">
-                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Título do Relatório</label>
-                    <input type="text" value={reportTitle} onChange={e => setReportTitle(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Nome do Pesquisador / Lab</label>
-                    <input type="text" value={reportAuthor} placeholder="Ex: Dra. Jane Doe" onChange={e => setReportAuthor(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Observações / Conclusões</label>
-                    <textarea value={reportNotes} placeholder="Adicione notas que serão impressas no final do relatório..." onChange={e => setReportNotes(e.target.value)} rows={2} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none resize-none" />
+              <div className="mb-6 pt-6 pb-6 border-y border-gray-100 flex flex-col gap-6 animate-in slide-in-from-top-2 bg-slate-50/50 p-6 -mx-6 -mt-2 mb-6">
+                
+                {/* Seção 1: Filtros e Ordenação */}
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-emerald-600" /> Filtros e Ordenação de Dados
+                  </h4>
+                  <div className="flex flex-wrap gap-4">
+                    <div className="flex flex-col gap-1.5 w-full sm:w-64">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Filtrar por Escape</label>
+                      <select
+                        value={escapeFilter}
+                        onChange={(e) => setEscapeFilter(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white font-medium text-gray-700 shadow-sm"
+                      >
+                        <option value="All">Todos (Escape e Não-Escape)</option>
+                        <option value="Escape">Apenas com Escape (SIM)</option>
+                        <option value="NoEscape">Apenas sem Escape (NÃO)</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 w-full sm:w-64">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Ordenar Resultados Por</label>
+                      <select
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white font-medium text-gray-700 shadow-sm"
+                      >
+                        <option value="fold_change_desc">Maior Fold Change (Risco alto)</option>
+                        <option value="fold_change_asc">Menor Fold Change</option>
+                        <option value="mut_rank_asc">Menor Rank do MUT (Maior Afinidade)</option>
+                        <option value="allele">Agrupar por Alelo</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
-                <div className="flex flex-col items-center justify-center border-l border-gray-100 pl-6">
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 w-full text-center">Logotipo do Laboratório</label>
-                  <LogoUploader logo={logo} onLogoChange={setLogo} />
+
+                <hr className="border-gray-200" />
+
+                {/* Seção 2: Informações do Documento PDF */}
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <FileDown className="w-4 h-4 text-emerald-600" /> Informações Visuais do PDF
+                  </h4>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Título do Relatório</label>
+                        <input type="text" value={reportTitle} onChange={e => setReportTitle(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none shadow-sm" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Nome do Pesquisador / Lab</label>
+                        <input type="text" value={reportAuthor} placeholder="Ex: Dra. Jane Doe" onChange={e => setReportAuthor(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none shadow-sm" />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Observações / Conclusões</label>
+                        <textarea value={reportNotes} placeholder="Adicione notas que serão impressas no final do relatório..." onChange={e => setReportNotes(e.target.value)} rows={2} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none resize-none shadow-sm" />
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center justify-center border-l border-gray-200 pl-6">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 w-full text-center">Logotipo do Laboratório</label>
+                      <LogoUploader logo={logo} onLogoChange={setLogo} />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -228,7 +291,7 @@ export default function VariantComparison() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {results.map((r, idx) => (
+                  {filteredResults.map((r, idx) => (
                     <tr key={idx} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm font-mono text-gray-600">{r.allele}</td>
                       <td className="px-4 py-3 text-sm font-mono font-bold bg-blue-50/30 text-blue-900">{r.wt_peptide}</td>
@@ -252,7 +315,7 @@ export default function VariantComparison() {
             <div style={{ display: 'none' }}>
               <VariantPdfReport
                 ref={printRef}
-                data={results}
+                data={filteredResults}
                 logo={logo}
                 customProps={{ reportTitle, reportAuthor, reportNotes }}
               />

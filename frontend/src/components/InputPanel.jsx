@@ -2,7 +2,11 @@ import React, { useState, useMemo } from 'react';
 import { FlaskConical, Send, AlertTriangle, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { sanitizeInput, validateSequences } from '../utils/fastaParser';
-import { COMMON_ALLELES, PREDICTION_METHODS, PEPTIDE_LENGTHS } from '../constants/alleles';
+import { 
+  COMMON_ALLELES, PREDICTION_METHODS, PEPTIDE_LENGTHS,
+  COMMON_ALLELES_MHCII, PREDICTION_METHODS_MHCII 
+} from '../constants/alleles';
+import { PREDICTION_METHODS_BCELL } from '../constants/bcell';
 import AllelePicker from './AllelePicker';
 
 const EXAMPLE_SEQUENCES = `>Spike_SARS_CoV_2_Fragment
@@ -12,14 +16,20 @@ MQAEGRGTGGSTGDADGPGGPGIPDGPGGNAGGPGEAGATGGRGPRGAGA
 >Influenza_A_Matrix_Protein
 MSLLTEVETYVLSIIPSGPLKAEIAQRLEDVFAGKNTDLEALMEWLKTRP`;
 
-export default function InputPanel({ onSubmit, isLoading }) {
+export default function InputPanel({ onSubmit, isLoading, isClassII = false, isBCell = false }) {
   const [rawSequences, setRawSequences] = useState('');
-  const [selectedAlleles, setSelectedAlleles] = useState(['HLA-A*02:01']);
+  
+  const allelesToUse = isClassII ? COMMON_ALLELES_MHCII : COMMON_ALLELES;
+  const methodsToUse = isBCell ? PREDICTION_METHODS_BCELL : (isClassII ? PREDICTION_METHODS_MHCII : PREDICTION_METHODS);
+  
+  const [selectedAlleles, setSelectedAlleles] = useState(isBCell ? [] : [allelesToUse[0]]);
   const [selectedLengths, setSelectedLengths] = useState([9]);
-  const [method, setMethod] = useState('netmhcpan_el');
+  const [method, setMethod] = useState(methodsToUse[0].value);
 
   const validation = useMemo(() => validateSequences(rawSequences), [rawSequences]);
-  const canSubmit = validation.isValid && selectedAlleles.length > 0 && selectedLengths.length > 0 && !isLoading;
+  
+  // Para BCell não precisamos de alelos nem lengths
+  const canSubmit = validation.isValid && !isLoading && (isBCell || (selectedAlleles.length > 0 && (isClassII || selectedLengths.length > 0)));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -27,8 +37,8 @@ export default function InputPanel({ onSubmit, isLoading }) {
     const sanitized = sanitizeInput(rawSequences);
     onSubmit({
       sequences: sanitized,
-      alleles: selectedAlleles,
-      lengths: selectedLengths,
+      alleles: isBCell ? [] : selectedAlleles,
+      lengths: isClassII || isBCell ? [] : selectedLengths,
       method,
     });
   };
@@ -47,8 +57,8 @@ export default function InputPanel({ onSubmit, isLoading }) {
 
   const loadExamples = () => {
     setRawSequences(EXAMPLE_SEQUENCES);
-    setSelectedAlleles(['HLA-A*02:01', 'HLA-B*07:02']);
-    setSelectedLengths([9, 10]);
+    if (!isBCell) setSelectedAlleles([allelesToUse[0], allelesToUse[1]]);
+    if (!isClassII && !isBCell) setSelectedLengths([9, 10]);
     toast.success('Sequências de exemplo carregadas!');
   };
 
@@ -62,7 +72,9 @@ export default function InputPanel({ onSubmit, isLoading }) {
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-800">Dados da Pesquisa</h2>
-            <p className="text-sm text-gray-500 font-medium mt-0.5">Predição algorítmica de epítopos de células T e afinidade ao complexo MHC Classe I</p>
+            <p className="text-sm text-gray-500 font-medium mt-0.5">
+              {isBCell ? "Predição algorítmica de epítopos lineares de células B" : `Predição algorítmica de epítopos de células T e afinidade ao complexo MHC Classe ${isClassII ? "II" : "I"}`}
+            </p>
           </div>
         </div>
       </div>
@@ -111,29 +123,31 @@ export default function InputPanel({ onSubmit, isLoading }) {
         <hr className="border-gray-100" />
 
         {/* Parameters grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Peptide Length */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Comprimento (K-mers)
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {PEPTIDE_LENGTHS.map(len => (
-                <button
-                  key={len}
-                  type="button"
-                  onClick={() => toggleLength(len)}
-                  className={`px-3.5 py-1.5 text-sm font-bold rounded-lg border-2 transition-all ${
-                    selectedLengths.includes(len)
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600'
-                  }`}
-                >
-                  {len}
-                </button>
-              ))}
+        <div className={`grid grid-cols-1 md:grid-cols-${isBCell ? '1' : (isClassII ? '2' : '3')} gap-6`}>
+          {/* Peptide Length (Somente Classe I) */}
+          {!isClassII && !isBCell && (
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Comprimento (K-mers)
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {PEPTIDE_LENGTHS.map(len => (
+                  <button
+                    key={len}
+                    type="button"
+                    onClick={() => toggleLength(len)}
+                    className={`px-3.5 py-1.5 text-sm font-bold rounded-lg border-2 transition-all ${
+                      selectedLengths.includes(len)
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600'
+                    }`}
+                  >
+                    {len}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Prediction Method */}
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
@@ -145,23 +159,25 @@ export default function InputPanel({ onSubmit, isLoading }) {
               onChange={(e) => setMethod(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
             >
-              {PREDICTION_METHODS.map(m => (
+              {methodsToUse.map(m => (
                 <option key={m.value} value={m.value}>{m.label}</option>
               ))}
             </select>
           </div>
 
           {/* MHC Alleles */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Alelos HLA (Classe I)
-            </label>
-            <AllelePicker
-              alleles={COMMON_ALLELES}
-              selected={selectedAlleles}
-              onChange={setSelectedAlleles}
-            />
-          </div>
+          {!isBCell && (
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Alelos HLA (Classe {isClassII ? "II" : "I"})
+              </label>
+              <AllelePicker
+                alleles={allelesToUse}
+                selected={selectedAlleles}
+                onChange={setSelectedAlleles}
+              />
+            </div>
+          )}
         </div>
 
         {/* Submit */}
@@ -179,3 +195,4 @@ export default function InputPanel({ onSubmit, isLoading }) {
     </form>
   );
 }
+

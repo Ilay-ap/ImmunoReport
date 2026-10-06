@@ -2,8 +2,9 @@ import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, field_validator
-from iedb_client import call_iedb, IEDBError
-from data_engine import parse_iedb_response
+from iedb_client import call_iedb, call_iedb_mhcii, call_iedb_bcell, IEDBError
+from data_engine import parse_iedb_response, parse_bcell_response
+from nextgen_client import NextgenClient
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -42,6 +43,52 @@ class PredictRequest(BaseModel):
         if not v: raise ValueError("Selecione ao menos um comprimento.")
         return v
 
+class PredictRequestMHCII(BaseModel):
+    sequences: str
+    alleles: list[str]
+    method: str = "netmhciipan"
+
+    @field_validator("sequences")
+    @classmethod
+    def sequences_not_empty(cls, v: str) -> str:
+        if not v.strip(): raise ValueError("Nenhuma sequência fornecida.")
+        return v.strip()
+
+    @field_validator("alleles")
+    @classmethod
+    def alleles_not_empty(cls, v: list[str]) -> list[str]:
+        if not v: raise ValueError("Selecione ao menos um alelo.")
+        return v
+
+class PredictRequestBCell(BaseModel):
+    sequences: str
+    method: str = "Emini"
+
+    @field_validator("sequences")
+    @classmethod
+    def sequences_not_empty(cls, v: str) -> str:
+        if not v.strip(): raise ValueError("Nenhuma sequência fornecida.")
+        return v.strip()
+
+class NextGenRequest(BaseModel):
+    sequences: str
+
+    @field_validator("sequences")
+    @classmethod
+    def sequences_not_empty(cls, v: str) -> str:
+        if not v.strip(): raise ValueError("Nenhuma sequência fornecida.")
+        return v.strip()
+
+class NextGenStructureRequest(BaseModel):
+    pdb_id: str
+    chain: str = "A"
+
+    @field_validator("pdb_id")
+    @classmethod
+    def pdb_id_not_empty(cls, v: str) -> str:
+        if not v.strip(): raise ValueError("Nenhum PDB ID fornecido.")
+        return v.strip()
+
 class PredictResponse(BaseModel):
     results: list[dict]
     total: int
@@ -76,10 +123,29 @@ async def predict(request: PredictRequest):
             
     try:
         raw = await call_iedb(request.method, request.sequences, ",".join(allele_list), ",".join(length_list))
-        results = parse_iedb_response(raw)
+        results = parse_iedb_response(raw, mhc_class="I")
         return PredictResponse(results=results, total=len(results))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/predict/mhcii", response_model=PredictResponse)
+async def predict_mhcii(request: PredictRequestMHCII):
+    try:
+        raw = await call_iedb_mhcii(request.method, request.sequences, ",".join(request.alleles))
+        results = parse_iedb_response(raw, mhc_class="II")
+        return PredictResponse(results=results, total=len(results))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/predict/bcell", response_model=PredictResponse)
+async def predict_bcell(request: PredictRequestBCell):
+    try:
+        raw = await call_iedb_bcell(request.method, request.sequences)
+        results = parse_bcell_response(raw, method=request.method)
+        return PredictResponse(results=results, total=len(results))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/compare")
 async def compare(request: CompareRequest):
@@ -153,6 +219,24 @@ async def compare(request: CompareRequest):
         logger.exception("Error in comparison")
         raise HTTPException(status_code=500, detail=str(e))
 
+class NextGenGenericRequest(BaseModel):
+    tool_group: str
+    input_parameters: dict = {}
+    stage_kwargs: dict = {}
+
+@app.post("/api/nextgen/run")
+async def nextgen_run(request: NextGenGenericRequest):
+    try:
+        results = await NextgenClient.run_tool(
+            tool_group=request.tool_group,
+            input_parameters=request.input_parameters,
+            **request.stage_kwargs
+        )
+        return {"results": results, "total": len(results) if isinstance(results, list) else 1}
+    except Exception as e:
+        logger.exception(f"Error in nextgen tool: {request.tool_group}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Servir Frontend Estático (Apenas em Produção)
 import os
 from fastapi.staticfiles import StaticFiles
@@ -176,4 +260,4 @@ else:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

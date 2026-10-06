@@ -5,7 +5,13 @@ import { Toaster } from 'react-hot-toast';
 
 import Home from './pages/Home';
 import TCellPredictor from './pages/TCellPredictor';
+import TCellPredictorClassII from './pages/TCellPredictorClassII';
 import VariantComparison from './pages/VariantComparison';
+import BCellPredictor from './pages/BCellPredictor';
+import ClusterPredictor from './pages/ClusterPredictor';
+import ConservancyPredictor from './pages/ConservancyPredictor';
+import PepSyScoPredictor from './pages/PepSyScoPredictor';
+import PepMatchPredictor from './pages/PepMatchPredictor';
 
 import Sobre from './pages/Sobre';
 
@@ -72,7 +78,14 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Layout><Home /></Layout>} />
         <Route path="/tcell" element={<Layout><TCellPredictor /></Layout>} />
+        <Route path="/tcell-ii" element={<Layout><TCellPredictorClassII /></Layout>} />
+        <Route path="/bcell" element={<Layout><BCellPredictor /></Layout>} />
         <Route path="/pepvcomp" element={<Layout><VariantComparison /></Layout>} />
+        <Route path="/cluster" element={<Layout><ClusterPredictor /></Layout>} />
+        <Route path="/conservancy" element={<Layout><ConservancyPredictor /></Layout>} />
+        <Route path="/pepsysco" element={<Layout><PepSyScoPredictor /></Layout>} />
+        <Route path="/pepmatch" element={<Layout><PepMatchPredictor /></Layout>} />
+
         <Route path="/sobre" element={<Layout><Sobre /></Layout>} />
       </Routes>
     </BrowserRouter>

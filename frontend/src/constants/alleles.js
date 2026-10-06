@@ -37,3 +37,30 @@ export const PREDICTION_METHODS = [
 ];
 
 export const PEPTIDE_LENGTHS = [8, 9, 10, 11];
+
+export const COMMON_ALLELES_MHCII = [
+  'HLA-DRB1*01:01',
+  'HLA-DRB1*03:01',
+  'HLA-DRB1*04:01',
+  'HLA-DRB1*04:05',
+  'HLA-DRB1*07:01',
+  'HLA-DRB1*08:02',
+  'HLA-DRB1*09:01',
+  'HLA-DRB1*11:01',
+  'HLA-DRB1*12:01',
+  'HLA-DRB1*13:02',
+  'HLA-DRB1*15:01',
+  'HLA-DQA1*05:01/DQB1*02:01',
+  'HLA-DQA1*05:01/DQB1*03:01',
+  'HLA-DQA1*03:01/DQB1*03:02',
+  'HLA-DPA1*01/DPB1*04:01',
+  'HLA-DPA1*01:03/DPB1*02:01',
+  'HLA-DPA1*02:01/DPB1*01:01',
+];
+
+export const PREDICTION_METHODS_MHCII = [
+  { value: 'netmhciipan', label: 'NetMHCIIpan 4.1' },
+  { value: 'nn_align', label: 'NN-align 2.3' },
+  { value: 'smm_align', label: 'SMM-align' },
+  { value: 'consensus', label: 'Consensus (IEDB Recommended)' },
+];

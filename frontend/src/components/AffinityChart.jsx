@@ -28,17 +28,27 @@ const AffinityChart = forwardRef(function AffinityChart({ data, hideWeak }, ref)
   let filtered = data;
   if (hideWeak) filtered = data.filter(r => r.binding_affinity !== 'Weak');
 
-  const alleles = [...new Set(filtered.map(r => r.allele))];
+  const hasAlleles = filtered.some(r => r.allele);
+  const alleles = hasAlleles ? [...new Set(filtered.map(r => r.allele))] : ['Score'];
+
+  const isRank = filtered.length > 0 && filtered[0].percentile_rank !== undefined;
 
   // Build chart data: each position has one entry with value per allele
   const positionMap = {};
   filtered.forEach(r => {
-    const pos = r.start;
+    const pos = r.start !== undefined ? r.start : r.position;
+    if (pos === undefined || pos === null) return;
+    
     if (!positionMap[pos]) positionMap[pos] = { position: pos };
-    // For multiple entries at same position/allele, keep the best (lowest) rank
-    const key = r.allele;
-    if (positionMap[pos][key] === undefined || r.percentile_rank < positionMap[pos][key]) {
-      positionMap[pos][key] = r.percentile_rank;
+    
+    const key = hasAlleles ? r.allele : 'Score';
+    const val = isRank ? r.percentile_rank : r.score;
+    
+    if (positionMap[pos][key] === undefined) {
+      positionMap[pos][key] = val;
+    } else {
+      if (isRank && val < positionMap[pos][key]) positionMap[pos][key] = val;
+      if (!isRank && val > positionMap[pos][key]) positionMap[pos][key] = val;
     }
   });
 
@@ -48,7 +58,9 @@ const AffinityChart = forwardRef(function AffinityChart({ data, hideWeak }, ref)
     <div ref={ref} className="bg-white rounded-lg border border-gray-200 p-4">
       <h3 className="text-sm font-semibold text-gray-700 mb-3">
         Perfil de Afinidade por Posição
-        <span className="font-normal text-gray-400 ml-2">(Eixo Y invertido — menor rank = maior afinidade)</span>
+        <span className="font-normal text-gray-400 ml-2">
+          {isRank ? "(Eixo Y invertido — menor rank = maior afinidade)" : "(Eixo Y — maior score = maior afinidade)"}
+        </span>
       </h3>
       <ResponsiveContainer width="100%" height={350}>
         <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -59,8 +71,8 @@ const AffinityChart = forwardRef(function AffinityChart({ data, hideWeak }, ref)
             tick={{ fontSize: 11 }}
           />
           <YAxis
-            reversed
-            label={{ value: 'Percentile Rank', angle: -90, position: 'insideLeft', style: { fontSize: 12 } }}
+            reversed={isRank}
+            label={{ value: isRank ? 'Percentile Rank' : 'Score', angle: -90, position: 'insideLeft', style: { fontSize: 12 } }}
             tick={{ fontSize: 11 }}
           />
           <Tooltip content={<CustomTooltip />} />

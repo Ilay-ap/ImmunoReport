@@ -13,40 +13,42 @@ import re
 logger = logging.getLogger(__name__)
 
 
-def classify_binding(percentile_rank: float) -> tuple[str, str]:
+def classify_binding(percentile_rank: float, mhc_class: str = "I") -> tuple[str, str]:
     """
     Apply semaphore classification based on percentile rank.
 
-    Rules:
-        percentile_rank <= 0.5  → Strong (Green #22c55e)
-        0.5 < percentile_rank <= 2.0 → Intermediate (Yellow #eab308)
-        percentile_rank > 2.0  → Weak (Gray #64748b)
-
     Args:
         percentile_rank: The percentile rank value from IEDB
+        mhc_class: "I" or "II"
 
     Returns:
         Tuple of (binding_affinity label, hex color code)
     """
-    if percentile_rank <= 0.5:
-        return "Strong", "#22c55e"
-    elif percentile_rank <= 2.0:
-        return "Intermediate", "#eab308"
+    if mhc_class == "I":
+        if percentile_rank <= 0.5:
+            return "Strong", "#22c55e"
+        elif percentile_rank <= 2.0:
+            return "Intermediate", "#eab308"
+        else:
+            return "Weak", "#64748b"
     else:
-        return "Weak", "#64748b"
+        # MHC-II thresholds
+        if percentile_rank <= 2.0:
+            return "Strong", "#22c55e"
+        elif percentile_rank <= 10.0:
+            return "Intermediate", "#eab308"
+        else:
+            return "Weak", "#64748b"
 
 
-def parse_iedb_response(raw_text: str) -> list[dict]:
+def parse_iedb_response(raw_text: str, mhc_class: str = "I") -> list[dict]:
     """
-    Parse the IEDB MHC-I API tab-separated response into structured data
+    Parse the IEDB MHC API tab-separated response into structured data
     with binding affinity classification.
-
-    The IEDB API returns TSV data with columns that vary by method.
-    Common columns include: allele, seq_num, start, end, length, peptide,
-    and one or more score/rank columns.
 
     Args:
         raw_text: Raw TSV text from the IEDB API
+        mhc_class: "I" or "II"
 
     Returns:
         List of dictionaries with parsed and classified results
@@ -88,7 +90,7 @@ def parse_iedb_response(raw_text: str) -> list[dict]:
             )
 
         # Apply semaphore classification
-        classifications = df[rank_col].apply(classify_binding)
+        classifications = df[rank_col].apply(lambda x: classify_binding(x, mhc_class))
         df["binding_affinity"] = classifications.apply(lambda x: x[0])
         df["color_code"] = classifications.apply(lambda x: x[1])
 
@@ -190,3 +192,62 @@ def _normalize_columns(df: pd.DataFrame, rank_col: str) -> pd.DataFrame:
     output_cols.extend(extra_cols)
 
     return df[output_cols]
+
+
+def parse_bcell_response(raw_text: str, method: str) -> list[dict]:
+    """
+    Parse the IEDB B Cell API tab-separated response.
+    Returns: List of dictionaries.
+    """
+    if not raw_text or not raw_text.strip():
+        raise ValueError("Empty response from IEDB API")
+
+    try:
+        df = pd.read_csv(StringIO(raw_text), sep="\t")
+        df.columns = df.columns.str.strip()
+
+        # Rename to lowercase standard
+        df.columns = [c.lower() for c in df.columns]
+
+        if "score" not in df.columns:
+            raise ValueError(f"Could not find a score column. Available: {list(df.columns)}")
+
+        df["score"] = pd.to_numeric(df["score"], errors="coerce")
+        df = df.dropna(subset=["score"])
+
+        # Basic classification based on typical thresholds
+        # Note: True thresholds vary strictly by algorithm, using simple heuristics for UI colors
+        def classify_bcell(score, m):
+            m = m.lower()
+            if "bepipred" in m:
+                return ("Strong", "#22c55e") if score >= 0.35 else ("Weak", "#64748b")
+            elif "emini" in m:
+                return ("Strong", "#22c55e") if score >= 1.0 else ("Weak", "#64748b")
+            elif "kolaskar" in m:
+                return ("Strong", "#22c55e") if score >= 1.0 else ("Weak", "#64748b")
+            else:
+                return ("Intermediate", "#eab308") if score > 0.8 else ("Weak", "#64748b")
+
+        classifications = df["score"].apply(lambda x: classify_bcell(x, method))
+        df["binding_affinity"] = classifications.apply(lambda x: x[0])
+        df["color_code"] = classifications.apply(lambda x: x[1])
+
+        # Ensure we map 'peptide' if it exists, and 'start' / 'end'
+        if "peptide" not in df.columns and "residue" in df.columns:
+            df["peptide"] = df["residue"]  # B cell sometimes outputs single residues
+
+        records = df.to_dict(orient="records")
+
+        for record in records:
+            for key, value in record.items():
+                if isinstance(value, float):
+                    if pd.isna(value) or value == float("inf"):
+                        record[key] = None
+
+        return records
+
+    except pd.errors.EmptyDataError:
+        raise ValueError("IEDB returned empty or malformed data")
+    except pd.errors.ParserError as e:
+        raise ValueError(f"Failed to parse IEDB response as TSV: {str(e)}")
+
